@@ -6,16 +6,36 @@ filename=""
 is_dir=0
 is_file=0
 
-function check_compression_type() {
+function main() {
     # This function checks the file type using the file command - returns the compprassion type (if it is compresses)
     # If it is not a compresses file, exit the script
+    file_dir=$(dirname "$filename")      # Get directory (e.g., ./path/to)
+    file_base=$(basename "$filename")
+
+
+
     comp_type=$(file $filename | awk '{print $2}')
     if [[ "$is_dir" -eq 1 ]]; then
         return 0
     fi
+    # This is a check to see if the file has an extension. 
+    # Compresses files doesn't necessarily have an extension like .gz/.zip/etc.
+    # In order to keep the original compressed as is, 
+    # in the case it doesn't have an extension, I'll add "_uncompressed" to the uncompressed file
+
+    if [[ "$file_base" == *.* ]]; then
+        output_file="${file_base%.*}"
+    else
+        output_file="${file_base}_uncompressed"
+    fi
+
+    full_output_file="$file_dir/$output_file"
+
     case "$comp_type" in
         gzip)
             echo $comp_type
+            # Here I use the -c to write the stdout
+            gunzip -c "$filename" > "$full_output_file"
             ;;
         bzip2)
             echo $comp_type
@@ -35,7 +55,7 @@ function check_compression_type() {
             ;;
     esac
 }
-
+#Fucntion to display the usage and flags of the function
 function usage() {
         echo "Usage: $0 [-v] [-r] <filename/directory>"
         echo "  -h       : [Optional] Display this message"
@@ -52,7 +72,8 @@ while [[ $# -gt 0 ]]; do
         -r) recursive=1; shift ;;
         -h) usage;;
         -) shift; break ;; 
-        -*) echo "Unknown option: $1"; usage ;;
+        # this checks if any other option beside the ones abvoe was entered
+        -*) echo "Unknown option: $1"; usage ;; 
         *) break ;;
     esac
 done
@@ -83,5 +104,5 @@ fi
 #     echo "Recursive mode enabled"
 # fi
 
-file_type=$(check_compression_type)
+file_type=$(main)
 echo "${file_type}"

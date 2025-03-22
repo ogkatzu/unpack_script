@@ -18,7 +18,12 @@ function usage() {
         echo "  filename/folder path : [Required] The files/folder to upack - Must be gzip,bzip2,zip or compressd "
         exit 0
 }
-
+function print_verbose()
+{
+    if [[ $verbose -eq 1 ]]; then
+        echo "Unpacking $filename"
+    fi
+}
 function process_file() {
     local filename="$1"
     file_dir=$(dirname "$filename")      # Get directory if the given file is structured like this: path/to/file.gz
@@ -39,21 +44,25 @@ function process_file() {
 
     local full_output_file="$file_dir/$output_file"
 
-    if [[ $verbose -eq 1 ]]; then
-        echo "Unpacking $filename"
-    fi
+    # if [[ $verbose -eq 1 ]]; then
+    #     echo "Unpacking $filename"
+    # fi
 
     case "$comp_type" in
         application/gzip)
+            print_verbose $filename
             gunzip -c "$filename" > "$full_output_file"
             ;;
         application/x-bzip2)
+            print_verbose $filename
             bunzip2 -c "$filename" > "$full_output_file"
             ;;
         application/zip)
+            print_verbose $filename
             handle_zip "$filename" "$full_output_file" "$file_dir"
             ;;
         application/x-compress)
+            print_verbose $filename
             uncompress -c "$filename" > "$full_output_file"
             ;;
         *)
@@ -164,7 +173,7 @@ function main() {
 
     done
 
-    echo "Decompressed: $success_counter archive(s), $fail_counter failed."
+    echo "Decompressed $success_counter archive(s)"
     exit "$fail_counter" # exiting with the number of faild files as an exit code (default = 0)
 }
 

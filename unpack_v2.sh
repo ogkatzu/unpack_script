@@ -25,12 +25,12 @@ function process_file() {
     file_base=$(basename "$filename")   # Get the file name without the path
 
     local comp_type=$(file --mime-type -b "$filename")
-
-    # This is a check to see if the file has an extension. 
-    # Compressed files don’t necessarily have an extension like .gz/.zip/etc.
-    # In order to keep the original compressed file as is, 
-    # if it doesn’t have an extension, I'll add "_uncompressed" to the uncompressed file.
-
+    : '
+    This is a check to see if the file has an extension. 
+    Compressed files dont necessarily have an extension like .gz/.zip/etc.
+    In order to keep the original compressed file as is, 
+    if it doesnt have an extension, Ill add "_uncompressed" to the uncompressed file.
+    '
     if [[ "$file_base" == *.* ]]; then
         output_file="${file_base%.*}"
     else
@@ -76,10 +76,21 @@ function process_file() {
 }
 
 function handle_zip() {
+    : '
+    Zip is special because unlike the other compression formats, 
+    it can compress a few file into one archive, unlike bzip2 or gzip.
+    This fucntion comes to solve this issue by checking if the zip contains more the one file
+    '
     local filename="$1"
     local full_output_file="$2"
     local file_dir="$3"
-
+    : '
+    here I check how many files are in the zip using the -l flag in the zip command.
+    tail -n +4 will discard the 4 first lines
+    head -n -2 will discard the 2 last lines
+    wc -l will count the number of lines in the processed unzip -l command
+    > 1 means that there are more then 1 file in the zip archive
+    '
     local file_count=$(unzip -l "$filename" | tail -n +4 | head -n -2 | wc -l)
     
     if [[ "$file_count" -eq 1 ]]; then
@@ -88,6 +99,24 @@ function handle_zip() {
         mkdir -p "$full_output_file"
         unzip -q -o "$filename" -d "$full_output_file"
     fi
+}
+
+
+
+function process_directory() {
+    local dir="$1"
+    local cur_dir="$2"
+    # Process all items in this directory
+    for item in "$dir"/*; do
+        if [[ -f "$item" ]]; then
+            process_file "$item"
+        elif [[ -d "$item" ]]; then
+            # Checking to see if -r is passed and the current file is directory. If so I run the function again.
+            if [[ -d "$item" && "$recursive" -eq 1 ]]; then
+                process_directory "$item" $((current_depth + 1))
+            fi
+        fi
+    done
 }
 
 # Processing the given CLI arguments
@@ -107,24 +136,9 @@ if [[ -z "$1" ]]; then
     usage
 fi
 
-function process_directory() {
-    local dir="$1"
-    local cur_dir="$2"
-    # Process all items in this directory
-    for item in "$dir"/*; do
-        if [[ -f "$item" ]]; then
-            process_file "$item"
-        elif [[ -d "$item" ]]; then
-            # Checking to see if -r is passed and the current file is directory. If so I run the function again.
-            if [[ -d "$item" && "$recursive" -eq 1 ]]; then
-                process_directory "$item" $((current_depth + 1))
-            fi
-        fi
-    done
-}
-
 function main() {
-
+    # running a loop over all the file arguments. The code above "shift" the arguments (like -r or -v) 
+    # and what is left is only the file/directory names.
     while [[ $# -gt 0 ]]; do
         filename="$1"
         shift
@@ -151,7 +165,7 @@ function main() {
     done
 
     echo "Decompressed: $success_counter archive(s), $fail_counter failed."
-    exit "$fail_counter"
+    exit "$fail_counter" # exiting with the number of faild files as an exit code (default = 0)
 }
 
 main "$@" # run the main fucntion with all the given CLI arguments passed ($@)

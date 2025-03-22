@@ -58,7 +58,7 @@ function process_file() {
             ;;
         *)
             if [[ $verbose -eq 1 ]]; then
-                echo "File type not supported: $filename"
+                echo "Ignoring: $filename"
             fi
             ((fail_counter++))
             return 1

@@ -1,0 +1,8 @@
+1. mutliple file -- done
+2. Parse the output of the file command to detect compression type -- done
+3. Automatically choose and apply the appropriate decompression method -- done
+4. Automatically overwrite existing files if they have the same name -- done
+5. Ensure the unpacked files are placed in the same directory as the original archive,
+   keeping the archive intact in its original location - Not done
+6. Must echo the exact number of successfully decompressed archives -- 80% done
+7. Must return (as exit code) the exact number of files that were NOT decompressed - Not done

@@ -1,23 +1,26 @@
 #!/bin/bash
 
+#intilazing some global variables
 verbose=0
 recursive=0
 filename=""
 is_dir=0
 is_file=0
+success_counter=0
+fail_counter=0
 
 function main() {
     # This function checks the file type using the file command - returns the compprassion type (if it is compresses)
-    # If it is not a compresses file, exit the script
-    file_dir=$(dirname "$filename")      # Get directory (e.g., ./path/to)
-    file_base=$(basename "$filename")
+    file_dir=$(dirname "$filename")      # Get directory if the given file is strctured like this path/to/file.gz
+    file_base=$(basename "$filename")   # Getting the file name with the path to the file
 
 
 
-    comp_type=$(file $filename | awk '{print $2}')
+    comp_type=$(file --mime-type -b "$filename")
     if [[ "$is_dir" -eq 1 ]]; then
         return 0
     fi
+
     # This is a check to see if the file has an extension. 
     # Compresses files doesn't necessarily have an extension like .gz/.zip/etc.
     # In order to keep the original compressed as is, 
@@ -32,26 +35,28 @@ function main() {
     full_output_file="$file_dir/$output_file"
 
     case "$comp_type" in
-        gzip)
-            echo $comp_type
+        application/gzip)
             # Here I use the -c to write the stdout
             gunzip -c "$filename" > "$full_output_file"
             ;;
-        bzip2)
-            echo $comp_type
+        application/x-bzip2)
+            bunzip2 -c "$filename" > "$full_output_file"
             ;;
-        zip)
-            echo $comp_type
+        application/zip)
+            # unzip command unzips the comppressed file to a folder
+            mkdir -p "$full_output_file"
+            unzip -o "$filename" -d "$full_output_file"
             ;;
-        *compress*)
-            echo $comp_type
+        application/x-compress)
+            uncompress -c "$filename" > "$full_output_file"
             ;;
         # more options for compressed file can be added:
         # for example:
         # tar)
         *)
             echo "File is not supported"
-            usage
+            ((fail_counter++))
+            return 1
             ;;
     esac
 }
@@ -79,30 +84,48 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Chceking if file name is given. If not, display the help messege and exit the script
-if [[ -z "$1" ]]; then
-    echo "Error: Missing filename or directory."
+if [[ $# -lt 1 ]]; then
+    echo "Error: Missing filename(s)."
     usage
 fi
 
-# $1 = first argument = filename
-filename="$1"
-# checking if the filename given is file or a folder
-if [[ -f "$filename" ]]; then
-    is_file=1
-elif [[ -d "$filename" ]]; then
-    is_dir=1
-else
-    echo "$filename does not exist"
-    exit 1
-fi
+# Function to process a single file
+process_file() {
+    local filename="$1"
 
-if [[ $verbose -eq 1 ]]; then
-    echo "Processing file: $filename"
-fi
+    # Check if it's a file or directory
+    if [[ -f "$filename" ]]; then
+        is_file=1
+    elif [[ -d "$filename" ]]; then
+        is_dir=1
+    else
+        echo "$filename does not exist"
+        return
+    fi
 
-# if [[ $recursive -eq 1 ]]; then
-#     echo "Recursive mode enabled"
-# fi
+    if [[ $verbose -eq 1 ]]; then
+        echo "Processing file: $filename"
+    fi
 
-file_type=$(main)
-echo "${file_type}"
+    # Call the decompression function
+    file_type=$(main "$filename")
+
+    if [[ $? -ne 0 ]]; then
+        echo "Error processing $filename"
+        ((fail_counter++))
+        return 1  # Return failure if the main function failed
+    fi
+
+    echo "Successfully processed: $filename"
+    ((success_counter++))
+    return 0  # 0 = Success
+    echo "${file_type}"
+}
+
+# Process all provided files
+succes=0
+for file in "$@"; do
+    process_file "$file" || success=1
+done
+echo "Total files unpacked: $success_counter"
+exit $success

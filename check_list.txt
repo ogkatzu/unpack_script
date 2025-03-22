@@ -5,4 +5,5 @@
 5. Ensure the unpacked files are placed in the same directory as the original archive,
    keeping the archive intact in its original location - Not done
 6. Must echo the exact number of successfully decompressed archives -- 80% done
-7. Must return (as exit code) the exact number of files that were NOT decompressed - Not done
+7. Must return (as exit code) the exact number of files that were NOT decompressed - done
+8. 

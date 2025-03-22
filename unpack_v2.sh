@@ -20,9 +20,6 @@ function usage() {
 }
 
 function process_file() {
-    if [[ $verbose -eq 1 ]]; then
-        echo "Unpacking $filename"
-    fi
     local filename="$1"
     file_dir=$(dirname "$filename")      # Get directory if the given file is structured like this: path/to/file.gz
     file_base=$(basename "$filename")   # Get the file name without the path
@@ -42,6 +39,10 @@ function process_file() {
 
     local full_output_file="$file_dir/$output_file"
 
+    if [[ $verbose -eq 1 ]]; then
+        echo "Unpacking $filename"
+    fi
+
     case "$comp_type" in
         application/gzip)
             gunzip -c "$filename" > "$full_output_file"
@@ -56,7 +57,9 @@ function process_file() {
             uncompress -c "$filename" > "$full_output_file"
             ;;
         *)
-            echo "File type not supported: $filename"
+            if [[ $verbose -eq 1 ]]; then
+                echo "File type not supported: $filename"
+            fi
             ((fail_counter++))
             return 1
             ;;
@@ -104,6 +107,21 @@ if [[ -z "$1" ]]; then
     usage
 fi
 
+function process_directory() {
+    local dir="$1"
+    local cur_dir="$2"
+    # Process all items in this directory
+    for item in "$dir"/*; do
+        if [[ -f "$item" ]]; then
+            process_file "$item"
+        elif [[ -d "$item" ]]; then
+            # Checking to see if -r is passed and the current file is directory. If so I run the function again.
+            if [[ -d "$item" && "$recursive" -eq 1 ]]; then
+                process_directory "$item" $((current_depth + 1))
+            fi
+        fi
+    done
+}
 
 function main() {
 
@@ -115,15 +133,14 @@ function main() {
             is_file=1
             process_file "$filename"
         elif [[ -d "$filename" ]]; then
-            if [[ "$recursive" -eq 1 ]]; then
-                # a loop that runs on every file in the folder
-                for item in "$filename"/*;do
-                    process_file "$item"
-                done
-            else
-            echo "$filename is a directory, use the -r to unpack the files inside the directory"
             is_dir=1
-            fi
+            for item in "$filename"/*; do
+                if [[ -f $item ]]; then
+                    process_file "$item"
+                elif [[ -d "$item" && "$recursive" -eq 1 ]]; then
+                    process_directory $item 1
+                fi
+            done
         else
             echo "$filename does not exist"
             ((fail_counter++))

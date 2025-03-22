@@ -4,6 +4,12 @@
 4. Automatically overwrite existing files if they have the same name -- done
 5. Ensure the unpacked files are placed in the same directory as the original archive,
    keeping the archive intact in its original location - Not done
-6. Must echo the exact number of successfully decompressed archives -- 80% done
+6. Must echo the exact number of successfully decompressed archives -- done
 7. Must return (as exit code) the exact number of files that were NOT decompressed - done
 8. 
+
+
+Issues I ran into:
+1. Some compressed files do not have an extension like .gz, and if I want to preserve the original file, I will need to address it
+2. Unpacking files inside a folder one level deep - without unpacking other folders in the parent folder
+3. Zip is special because unlike the other compression formats, it can compress a few file into one archive, unlike bzip2 or gzip.

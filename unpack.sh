@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# github repo can be found here:
+# https://github.com/ogkatzu/unpack_script
+
 # Initializing some global variables
 verbose=0 # Flag for vebose
 recursive=0 # Flag for recursive

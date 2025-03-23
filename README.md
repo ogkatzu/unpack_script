@@ -44,17 +44,16 @@ Extract multiple files:
 - `N` : Number of files that failed to unpack.
 
 ## Dependencies
-Ensure the following commands are installed:
+Ensure the following packages are installed:
 - `gunzip`
 - `bunzip2`
 - `unzip`
 - `uncompress`
 
-The script will check for missing dependencies and exit if any are not found.
 
 ## License
 This script is released under the MIT License.
 
 ## Author
-[Your Name]
+Saar Katz
 

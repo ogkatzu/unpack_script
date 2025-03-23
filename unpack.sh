@@ -29,8 +29,8 @@ function print_verbose()
 }
 function process_file() {
     local filename="$1"
-    file_dir=$(dirname "$filename")      # Get directory if the given file is structured like this: path/to/file.gz
-    file_base=$(basename "$filename")   # Get the file name without the path
+    local file_dir=$(dirname "$filename")      # Get directory if the given file is structured like this: path/to/file.gz
+    local file_base=$(basename "$filename")   # Get the file name without the path
 
     local comp_type=$(file --mime-type -b "$filename")
     : '
@@ -179,5 +179,4 @@ function main() {
     echo "Decompressed $success_counter archive(s)"
     exit "$fail_counter" # exiting with the number of faild files as an exit code (default = 0)
 }
-
 main "$@" # run the main fucntion with all the given CLI arguments passed ($@)

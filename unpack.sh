@@ -7,8 +7,6 @@
 verbose=0 # Flag for vebose
 recursive=0 # Flag for recursive
 filename=""
-is_dir=0 
-is_file=0
 success_counter=0
 fail_counter=0
 
@@ -21,13 +19,40 @@ function usage() {
         echo "  filename/folder path : [Required] The files/folder to upack - Must be gzip,bzip2,zip or compressd "
         exit 0
 }
+
+function check_dependencies() {
+    # Fucntion to check wether the required packages are installed
+    local missing=() # initilazing a list that will include the missing packages (if there are)
+    for cmd in unzip gunzip bunzip2 uncompress; do
+        # cmd is a list of the required packages - more can be added if needed
+        if ! command -v "$cmd" &> /dev/null; then
+            # the command 'command' (when passed with -v) will return a single word indicating the 
+            # command or file name used to invoke command to be displayed
+            # &> /dev/null will suppresses the output of the command (making ir run silently)
+            # if the command is not found (hence using the NOT operator !) it will add the current command to the list of missing commands
+            missing+=("$cmd")
+        fi
+    done
+
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        # Check if the length of the missing array is larger then 0
+        echo "Error: Missing required packages: ${missing[*]}"
+        exit 1
+    fi
+}
+
 function print_verbose()
 {
     if [[ $verbose -eq 1 ]]; then
         echo "Unpacking $filename"
     fi
 }
+
 function process_file() {
+    : '
+    Main processing function 
+    Gets file name and preform the matching uncompression command based on the output of the file command
+    '
     local filename="$1"
     local file_dir=$(dirname "$filename")      # Get directory if the given file is structured like this: path/to/file.gz
     local file_base=$(basename "$filename")   # Get the file name without the path
@@ -46,10 +71,6 @@ function process_file() {
     fi
 
     local full_output_file="$file_dir/$output_file"
-
-    # if [[ $verbose -eq 1 ]]; then
-    #     echo "Unpacking $filename"
-    # fi
 
     case "$comp_type" in
         application/gzip)
@@ -106,18 +127,16 @@ function handle_zip() {
     local file_count=$(unzip -l "$filename" | tail -n +4 | head -n -2 | wc -l)
     
     if [[ "$file_count" -eq 1 ]]; then
-        unzip -q -o "$filename" -d "$file_dir"
+        unzip -q -o "$filename" -d "$file_dir" # -o overwrite files WITHOUT prompting & -q for quite mode
     else
-        mkdir -p "$full_output_file"
+        mkdir -p "$full_output_file" # -p makes parent directory(s)
         unzip -q -o "$filename" -d "$full_output_file"
     fi
 }
 
 
-
 function process_directory() {
     local dir="$1"
-    local cur_dir="$2"
     # Process all items in this directory
     for item in "$dir"/*; do
         if [[ -f "$item" ]]; then
@@ -125,7 +144,7 @@ function process_directory() {
         elif [[ -d "$item" ]]; then
             # Checking to see if -r is passed and the current file is directory. If so I run the function again.
             if [[ -d "$item" && "$recursive" -eq 1 ]]; then
-                process_directory "$item" $((current_depth + 1))
+                process_directory "$item"
             fi
         fi
     done
@@ -151,20 +170,19 @@ fi
 function main() {
     # running a loop over all the file arguments. The code above "shift" the arguments (like -r or -v) 
     # and what is left is only the file/directory names.
+    check_dependencies
     while [[ $# -gt 0 ]]; do
         filename="$1"
         shift
 
         if [[ -f "$filename" ]]; then
-            is_file=1
             process_file "$filename"
         elif [[ -d "$filename" ]]; then
-            is_dir=1
             for item in "$filename"/*; do
                 if [[ -f $item ]]; then
                     process_file "$item"
                 elif [[ -d "$item" && "$recursive" -eq 1 ]]; then
-                    process_directory $item 1
+                    process_directory "$item"
                 fi
             done
         else

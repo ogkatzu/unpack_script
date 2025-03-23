@@ -51,9 +51,6 @@ Ensure the following packages are installed:
 - `uncompress`
 
 
-## License
-This script is released under the MIT License.
-
 ## Author
 Saar Katz
 

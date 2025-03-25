@@ -28,7 +28,7 @@ function check_dependencies() {
         if ! command -v "$cmd" &> /dev/null; then
             # the command 'command' (when passed with -v) will return a single word indicating the 
             # command or file name used to invoke command to be displayed
-            # &> /dev/null will suppresses the output of the command (making ir run silently)
+            # &> /dev/null will silence the output of the command (making ir run silently) - sending to "grabage bucket"
             # if the command is not found (hence using the NOT operator !) it will add the current command to the list of missing commands
             missing+=("$cmd")
         fi

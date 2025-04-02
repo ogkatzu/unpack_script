@@ -6,7 +6,6 @@
 # Initializing some global variables
 verbose=0 # Flag for vebose
 recursive=0 # Flag for recursive
-filename=""
 success_counter=0
 fail_counter=0
 
@@ -155,6 +154,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -v) verbose=1; shift ;;
         -r) recursive=1; shift ;;
+        -rv) recursive=1;verbose=1; shift ;;
+        -vr) recursive=1;verbose=1; shift ;;
         -h) usage ;;
         -) shift; break ;;
         -*) echo "Unknown option: $1"; usage ;;

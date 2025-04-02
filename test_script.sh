@@ -87,8 +87,8 @@ run_test() {
     echo ""
 }
 # Full path to your unpack script
-UNPACK_SCRIPT="~/unpack_script/unpack.sh"
-
+# UNPACK_SCRIPT="~/unpack_script/unpack.sh"
+UNPACK_SCRIPT="~/devleap_script/unpack.sh"
 # Test cases
 echo -e "${YELLOW}=== Starting tests ===${NC}"
 
